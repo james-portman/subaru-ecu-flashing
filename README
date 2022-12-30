@@ -3,7 +3,7 @@ subaru-ecu-flashing
 This is my progress so far into an open source method for flashing - reading and writing - subaru ECUs
 Ideally without having to use expensive cables or software
 
-Specifically this is for a 32-bit ECU from a 32-bit ECU, drive by wire 2006 EDM Impreza STI
+Specifically this is for a 32-bit ECU from drive by wire equipped 2006 EDM Impreza STI
 It has a Renesas SH-7058 CPU
 The code for it is SH-2e
 
@@ -127,3 +127,60 @@ I don't think the ECU replies to this
 Now to make the ECU run the code you sent, send a final packet:
 0x31 0x01 0x01
 If OK it will reply 0x71 and immediately run your code
+
+From now onwards you need to communicate however the new code/kernel requires
+
+
+
+The following concerns the OpenECU kernel for this ECU (OpenECU Subaru SH7058 OCP Kernel V0.21)
+
+Immediately swap to baud rate 62500
+
+The kernel packets are formatted as the following, no matter which direction
+0xbe 0xef [high byte of data size] [low byte of data size] [data bytes] [sum checksum of everything previous]
+
+In brief, below are the commands you can run, the code replies with the command byte+0x80
+It also sends 0xF~ for errors
+
+0x01 - get kernel version
+0x02 - run CRC 32 on an area of ECU memory
+0x03 - read a block of data from ECU memory
+0x04 - check car battery voltage
+
+0x20 - enable flash
+0x21 - disable flash
+0x22 - write to flash buffer (prepare to write but not yet)
+0x23 - validate flash buffer
+0x24 - commit flash buffer (actually write it)
+0x25 - erase a flash block, needed before writing
+
+Error values:
+0xF0 - bad data length
+0xF1 - bad data value
+0xF2 - programming failure
+0xF3 - voltage too low
+0xF4 - voltage too high
+0xF5 - CRC incorrect
+0xFF - bad command
+
+Flash can only be erased and then written in blocks, that's just how it works
+Here are the list of blocks for this CPU:
+address 0x00000 length 0x1000
+address 0x01000 length 0x01000
+address 0x02000 length 0x01000
+address 0x03000 length 0x01000
+address 0x04000 length 0x01000
+address 0x05000 length 0x01000
+address 0x06000 length 0x01000
+address 0x07000 length 0x01000
+address 0x08000 length 0x18000
+address 0x20000 length 0x20000
+address 0x40000 length 0x20000
+address 0x60000 length 0x20000
+address 0x80000 length 0x20000
+address 0xa0000 length 0x20000
+address 0xc0000 length 0x20000
+address 0xe0000 length 0x20000
+
+If you need to change data inside one of the blocks then you need to wipe the whole block and reprogram it fully
+
