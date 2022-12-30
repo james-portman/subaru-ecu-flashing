@@ -1,0 +1,129 @@
+subaru-ecu-flashing
+
+This is my progress so far into an open source method for flashing - reading and writing - subaru ECUs
+Ideally without having to use expensive cables or software
+
+Specifically this is for a 32-bit ECU from a 32-bit ECU, drive by wire 2006 EDM Impreza STI
+It has a Renesas SH-7058 CPU
+The code for it is SH-2e
+
+If there is interest then it can be expanded to more ECUs
+
+
+It is possible to decompile the ECU ROM file in Ghidra or Ida pro
+The ROM data in the ECU memory map starts at 0x0 so it is easy to load in
+The CPU manuals tell you where I/O etc are such as the serial ports
+
+It uses what I have seen called SSM 2 (version 2 of the Subaru SSM protocol)
+See ssm2-protocol file for general info on the protocol for the diagnostic side
+
+It is basically close to KWP-2000/UDS - it uses the same service IDs, failures return 0x7f... in the same way
+
+
+
+
+Here are the general steps to gain full control over the ECUs;
+
+
+Connect the test-mode connector in the car - not 100% sure this is needed or even present on all cars
+Some cars have the test connector also wired to the diagnostic port, you can make a special cable with the test pin permanently pulled to ground, or on a switch
+
+
+Connect using a diagnostic cable
+Any normal k-line cable will work, sometimes they get called vag-KKL, cables with FTDI chip in definitely work e.g. FT232R
+
+Use 4800 baud, 8 data bits, no parity, 1 stop bit (1 start bit inferred)
+
+Packets from the tester to the ECU in this mode are in the following format
+0x80 0xf0 0x10 [data length 1 byte] [data bytes...] [sum checksum of everything before this checksum byte, 1 byte so & 0xFF]
+Packets from the ECU replying to the tester will start with 0x80 0x10 0xf0 (source and destination swapped)
+
+Send 0xbf to the ECU
+e.g. 0x80 0xf0 0x10 0x01 0xbf 0x40
+This is an init type command which is needed to start things off
+The ECU replies with a fair amount of data
+If you want then you can check for the test mode connector being set/connected in the data
+
+
+Send 0x81 in a packet
+
+Send 0x83, 0x00 in a packet
+
+
+Now we need to authenticate
+Send 0x27 0x01 in a packet
+The ECU will reply 0x67, 0x02, [4 byte seed]
+You need to run the seed through an algorithm to generate a key and send that back to the ECU
+
+Send the key back: 0x27 0x02 [4 byte key]
+If successful the ECU will reply with 0x67
+
+Now send 0x10 0x85 0x02
+The ECU should reply 0x50
+
+At this point, immediately change baud rate to 15625
+
+Wait for some amount of time to allow the ECU to also change baud rate before you send any more packets,
+in my code I put a sleep of 300ms which is probably overkill but works
+
+
+In this mode it is possible to send arbitrary code to the ECU and have it execute it
+
+I have been testing with the OpenECU kernel from EcuFlash 1.28 but it is not clear what license is on this, so not sure if I can distribute or reuse it or not.
+I have asked for confirmation
+
+The EcuFlash kernel for this ECU has code to carry on communication, run CRC32 checks on areas of data in the ECU and to read and write to the ECU
+If it is not allowed to re-use the OpenECU kernel then a new one could be made from scratch.
+There are a lot of sample source code files on the Renesas website for this ECU - some related to erasing and writing flash, talking over serial etc
+
+I will carry on explaining while assuming that the OpenECU kernel can be used
+
+
+Use service 0x34 to request a data download (download means FROM us TO the ECU)
+In the ECU code there are restriction on where you can write this to - specific area of RAM, and size limitation
+Assuming you are writing to RAM from address 0xffff3000 onwards, and your code/kernel is 3112 bytes long (0xc28)
+For whatever reason you don't need to send the first 0xff for the address, the ECU assumes it
+
+I am not totally sure on the format of this but it works, the ECU does specifically check for the 0x04 in the middle
+
+Send the following in a packet:
+0x34 [(address >> 16) & 0xFF] [(address >> 8) & 0xFF] [address & 0xFF] 0x04 [(size >> 16) & 0xFF] [(size >> 8) & 0xFF] [size & 0xFF]
+e.g.
+0x34 0xff 0x30 0x00 0x04 0x00 0x0c 0x28
+
+The ECU should reply 0x74 for OK
+
+
+Now you can transfer the code/kernel using service 0x36
+Send a 3 byte target address, as above missing the first 0xff
+Send max 128 bytes of code/kernel at a time until you have sent the whole thing
+
+In this case the code that you send must be encrypted, the ECU decrypts it and stores it in RAM at the target addresses
+The encryption is very close to the seed/key method but slightly different values fed in
+
+e.g.
+0x36 [0xff 0x30 0x00] [128 bytes of code]
+then send the data for address target 128 bytes on
+0x36 [0xff 0xb0 0x00] [next 128 bytes of code]
+
+Each time the ECU should reply 0x76 for OK
+
+
+Not sure if the next step is needed but it is very strange
+I think it is basically for checking that the data was sent OK, even though there are checksums on every packet
+The data is too large to send in a normal packet with a single byte for data length, so maybe that's why it is different to normal
+
+Basically send the whole code/kernel in one go, and only this one time, DON'T use the proper packet format
+Send the raw bytes:
+0x53
+0xff 0x30 0x00 (start address of download)
+0x0c 0x28 (code/download size)
+[all data bytes of the code in one go]
+[sum checksum of everything previous]
+
+I don't think the ECU replies to this
+
+
+Now to make the ECU run the code you sent, send a final packet:
+0x31 0x01 0x01
+If OK it will reply 0x71 and immediately run your code
