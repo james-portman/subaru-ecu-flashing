@@ -5,10 +5,15 @@ Ideally without having to use expensive cables or software
 
 
 
+DISCLAIMER:
+
 BE CAREFUL DOING ANYTHING RELATED TO THIS, IF YOU PARTIALLY OR IMPROPERLY FLASH AN ECU IT WILL PROBABLY BE USELESS
 IF YOU ERASE A FLASH BLOCK WITHOUT IMMEDIATELY REPROGRAMMING IT THEN THE ECU WILL PROBABLY BE USELESS
 
 There is a way to recover these ECUs (user boot mode) but requires soldering directly on to test pads etc and is not guaranteed
+
+There is some python code in the repo related to all of this, partially tested, never guaranteed to work
+You should not use it on a real car or ECU, if you do then it is at your own risk
 
 
 
