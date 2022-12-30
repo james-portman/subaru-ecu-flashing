@@ -3,6 +3,16 @@ subaru-ecu-flashing
 This is my progress so far into an open source method for flashing - reading and writing - subaru ECUs
 Ideally without having to use expensive cables or software
 
+
+
+BE CAREFUL DOING ANYTHING RELATED TO THIS, IF YOU PARTIALLY OR IMPROPERLY FLASH AN ECU IT WILL PROBABLY BE USELESS
+IF YOU ERASE A FLASH BLOCK WITHOUT IMMEDIATELY REPROGRAMMING IT THEN THE ECU WILL PROBABLY BE USELESS
+
+There is a way to recover these ECUs (user boot mode) but requires soldering directly on to test pads etc and is not guaranteed
+
+
+
+
 Specifically this is for a 32-bit ECU from drive by wire equipped 2006 EDM Impreza STI
 It has a Renesas SH-7058 CPU
 The code for it is SH-2e
@@ -184,3 +194,29 @@ address 0xe0000 length 0x20000
 
 If you need to change data inside one of the blocks then you need to wipe the whole block and reprogram it fully
 
+
+Rather than programming the entire ECU every time you can just check the CRC32 for a block, and compare it to your local ROM file
+To ask for CRC for a block, send the following in a packet;
+0x02 [4 byte address, highest byte first] [4 byte length, highest byte first]
+e.g. for the last block from above:
+0x02 [0x00 0x0e 0x00 0x00] [0x00 0x02 0x00 0x00]
+
+The ECU should reply 0x82 [4 byte CRC, highest byte first]
+
+
+This is as far as I have tested so far and can confirm the above works
+
+
+
+
+
+To read an area of the CPU, use the 0x03 command and also send a 4 byte address, plus two bytes for the length
+
+
+To erase a flash page use the 0x25 command with a 4 byte address which should point to the start of a flash block
+
+
+To write to the flash buffer use command 0x22 with a 4 byte address with 512 bytes of raw data
+
+
+To commit the flash buffer use command 0x24 followed by the 4 byte address and 4 byte CRC, I assume the address should be the start of a flash block
