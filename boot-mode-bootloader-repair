@@ -28,7 +28,10 @@ Ground to ground on ECU header pins, there are 2 to use, or go to C446 negative 
 There are also pin headers on the ECU board near the CPU but they are very small, the test pads are a lot easier to solder
 This was enough for the newest version of ECU Flash to write a stock file to the ECU in bootstrap mode
 
+Notes:
 I think using this method it is only possible to write a new rom file, the security of the CPU purposefully does not allow you to read the data off in this mode
+There is info here: https://www.tactrix.com/index.php?option=com_content&view=article&id=66
+I will add the shbootmod.pdf file in this repo as some parts of that website/page are broken and they may disappear
 
 Future work:
 Look at the CPU docs to find out how this all works, it is different to the normal flashing method
