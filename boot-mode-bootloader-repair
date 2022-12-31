@@ -50,3 +50,21 @@ Watching what the dev kit tries
 sends loads of single byte 0x00's - I think so the ECU can sync up to the baud rate
 it keeps reading here so probably expecting a reply
 with no response it drops to lower baud rates - 4800, 2400, 1200
+
+Maybe not quite right but..
+https://www.renesas.com/us/en/document/apn/rl78-microcontroller-rl78-protocol-c-serial-programming-guide?language=en
+also
+https://www.renesas.com/us/en/document/apn/standard-boot-firmware-ra-family-mcus-based-arm-cortex-m33
+https://www.renesas.com/us/en/document/apn/system-specifications-standard-boot-firmware-ra2-application-note
+few others similar
+
+this may be more relevant:
+https://www.renesas.com/us/en/document/apn/sh7137-group-application-note-using-user-program-mode?language=en
+see sample program - 0x55 - Flash memory programming/erasing start command
+
+this one seems more correct
+https://www.renesas.com/us/en/document/apn/rx63n-group-flash-programmer-boot-mode-using-renesas-starter-kit-rx63n-rev100?language=en
+
+https://www.renesas.com/us/en/document/apn/sh7058f-group-018-m-process-f-ztat-microcomputer-board-programming
+
+https://www.renesas.com/us/en/document/tcu/notes-users-manual-sh7250-series
