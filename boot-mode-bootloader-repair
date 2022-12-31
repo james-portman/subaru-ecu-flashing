@@ -1,0 +1,36 @@
+Subaru ECU bootstrap mode (boot mode) repair
+There are some freely available applications which can read and write to Subaru ECUs
+
+I recently repaired a Subaru ECU which had been locked by an ECUTek remap
+As part of the ECUTek remap, they alter the stock authentication method which blocks access from any of the usual tools
+Only an ECUTek tool will be able to read or write to the ECU over a diagnostic cable
+It is not even possible to flash the ECU back to a stock file
+
+As with many CPUs, it is possible to do a very low level erase and write of the data
+There are a number of example DIY circuits that people have made to accomplish this, but they all looked quite complicated
+
+All that is really needed is a 5v TTL level UART serial connection, a timed signal to keep the watchdog timer happy to prevent it from constantly resetting the CPU, and to hold several ECU pins in certain states
+I managed both of these points by using an Arduino Pro Micro (5v) and an FTDI USB to 5v TTL UART cable
+
+FTDI cable
+Yellow to test pad p411 (rx)
+Orange to test pad p409 (tx)
+Red 5v to arduino raw (5v)
+Ground to arduino ground
+
+Arduino Pro Micro 5v
+Solder the Arduino jumper to skip its voltage regulator, getting raw 5v from FTDI cable
+Pin 8 - p405/FWE - set high in Arduino code (might be possible to just take this to the 5v from FTDI cable?)
+Pin 9 - p413/MD1 - set low in Arduino code (might be possible to just take this to ground)
+Pin 10 to p407 (watchdog timer) - toggle high and low at approx 125hz in arduino code - there will be some specific maximum time, if you don't toggle fast enough then the ECU will reset/restart
+Ground to ground on ECU header pins, there are 2 to use, or go to C446 negative side
+
+There are also pin headers on the ECU board near the CPU but they are very small, the test pads are a lot easier to solder
+This was enough for the newest version of ECU Flash to write a stock file to the ECU in bootstrap mode
+
+I think using this method it is only possible to write a new rom file, the security of the CPU purposefully does not allow you to read the data off in this mode
+
+Future work:
+Look at the CPU docs to find out how this all works, it is different to the normal flashing method
+If the method of flashing through boot mode is worked out then it could be done without having to use EcuFlash
+It will also then be possible to do this using only the Arduino pro micro hooked up directly to a PC, without using the FTDI cable
