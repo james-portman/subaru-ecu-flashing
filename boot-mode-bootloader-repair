@@ -32,8 +32,12 @@ Notes:
 I think using this method it is only possible to write a new rom file, the security of the CPU purposefully does not allow you to read the data off in this mode
 There is info here: https://www.tactrix.com/index.php?option=com_content&view=article&id=66
 I will add the shbootmod.pdf file in this repo as some parts of that website/page are broken and they may disappear
+Renesas do a tool for this - https://www.renesas.com/us/en/software-tool/flash-development-toolkit-programming-gui#overview - it should just work if you wired up the arduino to satisfy the timer and use the ftdi cable, the toolkit has kernels in for reprogramming, would be easy to re-use those, may be what ecuflash does already
+- that tool has kernels for basically all of the CPUs and also a text file with loads of info in to go with it including flash blocks, baud rate etc
+- for the 7058 it says the kernel is in the device (CPU) already, so it may just be a case of working out how to communicate with it
+- the first clue is Kernel Handshake = 167 (0xA7)
 
 Future work:
-Look at the CPU docs to find out how this all works, it is different to the normal flashing method
+Find out how this all works exactly, it is different to the normal flashing method
 If the method of flashing through boot mode is worked out then it could be done without having to use EcuFlash
-It will also then be possible to do this using only the Arduino pro micro hooked up directly to a PC, without using the FTDI cable
+It will also then be possible to do this using only the Arduino pro micro hooked up directly to a PC, without using the FTDI cable, the Arduino can act as a serial relay as well as doing the watchdog timer
