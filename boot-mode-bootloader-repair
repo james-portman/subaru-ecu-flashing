@@ -41,3 +41,12 @@ Future work:
 Find out how this all works exactly, it is different to the normal flashing method
 If the method of flashing through boot mode is worked out then it could be done without having to use EcuFlash
 It will also then be possible to do this using only the Arduino pro micro hooked up directly to a PC, without using the FTDI cable, the Arduino can act as a serial relay as well as doing the watchdog timer
+
+
+Built in kernel protocol/connection
+
+Watching what the dev kit tries
+9600 baud
+sends loads of single byte 0x00's - I think so the ECU can sync up to the baud rate
+it keeps reading here so probably expecting a reply
+with no response it drops to lower baud rates - 4800, 2400, 1200
