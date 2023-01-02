@@ -284,10 +284,12 @@ D0h, 53h (programming error)
 first packet:
 
 < 0x50
+
 < 0x0
 < 0x0
 < 0x0
 < 0x0
+
 < 0x0
 < 0x0
 < 0xb
@@ -433,6 +435,26 @@ D0h, 2Ah (address error)
 """
 
 
+"""
+if verify is enabled then it might read back
+0x52 memory read command
+
+52h (memory read)
+09h (size)
+01h (area)
+FFh, FXh, XXh, 00h (read address)
+00h, 00h, 01h, 00h (read size)
+XXh (SUM)
+
+52h (response to the memory read command: ACK)
+00h, 00h, 01h, 00h (read size)
+XXh, ... 256 bytes ..., XXh (read data)
+XXh (SUM)
+
+D2h, 11h (checksum error)
+D2h, 2Ah (address error)
+D2h, 2Bh (data size error)
+"""
 
 # just loop reading
 while True:
